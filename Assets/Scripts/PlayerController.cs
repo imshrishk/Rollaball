@@ -12,6 +12,7 @@ public class PlayerController : MonoBehaviour
     private int count;
     private float movementX;
     private float movementY;
+    private bool isGracePeriod = true;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -21,6 +22,9 @@ public class PlayerController : MonoBehaviour
 
         SetCountText();
         winTextObject.SetActive(false);
+
+        // End the grace period after 3 seconds
+        Invoke(nameof(EndGracePeriod), 3f);
     }
 
     void OnMove(InputValue movementValue)
@@ -34,9 +38,11 @@ public class PlayerController : MonoBehaviour
     void SetCountText()
     {
         countText.text = "Score: " + count.ToString();
-        if (count >= 10) 
+        if (count >= 10)
         {
             winTextObject.SetActive(true);
+
+            Destroy(GameObject.FindGameObjectWithTag("Enemy"));
         }
     }
 
@@ -44,17 +50,33 @@ public class PlayerController : MonoBehaviour
     {
         Vector3 movement = new Vector3(movementX, 0.0f, movementY);
 
-        rb.AddForce(movement*speed);
+        rb.AddForce(movement * speed);
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Enemy") && !isGracePeriod)
+        {
+            Destroy(gameObject);
+
+            winTextObject.gameObject.SetActive(true);
+            winTextObject.GetComponent<TextMeshProUGUI>().text = "You Lose!";
+        }
     }
 
     void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject.CompareTag("PickUp")) 
+        if (other.gameObject.CompareTag("PickUp"))
         {
             other.gameObject.SetActive(false);
             count++;
 
             SetCountText();
         }
+    }
+
+    private void EndGracePeriod()
+    {
+        isGracePeriod = false;
     }
 }
